@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Evolve POS</string>
+    <string name="name_hint">Name</string>
+    <string name="street_address_hint">Address</string>
+    <string name="state_address_hint">State</string>
+    <string name="city_address_hint">City</string>
+    <string name="zip_address_hint">Zip code</string>
+    <string name="email_hint">Email</string>
+    <string name="mobile_phone_hint">Mobile</string>
+    <string name="evening_phone_hint">Evening</string>
+    <string name="volunteer">Volunteer</string>
+    <string name="keep_informed">Keep me informed</string>
+    <string name="amount_hint">Amount</string>
+    <string name="cc_number_hint">Credit card number</string>
+    <string name="cc_month_hint">Month</string>
+    <string name="cc_year_hint">Year</string>
+    <string name="submit">Submit</string>
+    <string name="action_settings">Settings</string>
+
+</resources>

@@ -1,0 +1,159 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.evolve.evolvepos.GatherInformationActivity$PlaceholderFragment" >
+
+    <LinearLayout
+        android:id="@+id/contact_form"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:gravity="top"
+        android:orientation="vertical" >
+
+        <EditText
+            android:id="@+id/name"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/name_hint"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/street_address"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/street_address_hint"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/city_address"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/city_address_hint"
+            android:inputType="text" />
+
+        <LinearLayout
+            android:id="@+id/city_state_zip_container"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:orientation="horizontal" >
+
+            <EditText
+                android:id="@+id/state_address"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight=".50"
+                android:hint="@string/state_address_hint"
+                android:inputType="text" />
+
+            <EditText
+                android:id="@+id/zip_address"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight=".50"
+                android:hint="@string/zip_address_hint"
+                android:inputType="number" />
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/email_address"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/email_hint"
+            android:inputType="textEmailAddress" />
+
+        <LinearLayout
+            android:id="@+id/phone_container"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:orientation="horizontal" >
+
+            <EditText
+                android:id="@+id/mobile_phone"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight=".5"
+                android:hint="@string/mobile_phone_hint"
+                android:inputType="phone" />
+
+            <EditText
+                android:id="@+id/evening_phone"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight=".5"
+                android:hint="@string/evening_phone_hint"
+                android:inputType="phone" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/check_box_container"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <CheckBox
+                android:id="@+id/volunteer_checkbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/volunteer" />
+
+            <CheckBox
+                android:id="@+id/keep_informed_checkbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/keep_informed" />
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/amount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="@string/amount_hint"
+            android:inputType="number" />
+
+        <EditText
+            android:id="@+id/cc_number"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/cc_number_hint"
+            android:inputType="number" />
+
+        <LinearLayout
+            android:id="@+id/cc_month_year_containter"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <EditText
+                android:id="@+id/cc_month"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight=".5"
+                android:hint="@string/cc_month_hint"
+                android:inputType="number" />
+
+            <EditText
+                android:id="@+id/cc_year"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight=".5"
+                android:hint="@string/cc_year_hint"
+                android:inputType="number" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/submit_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/submit"
+            android:layout_gravity="right" >
+        </Button>
+    </LinearLayout>
+
+</RelativeLayout>
