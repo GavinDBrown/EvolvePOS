@@ -1,14 +1,15 @@
 
 package com.evolve.evolvepos;
 
+import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
+
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class GatherInformationActivity extends ActionBarActivity {
 
@@ -19,7 +20,7 @@ public class GatherInformationActivity extends ActionBarActivity {
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaceholderFragment()).commit();
+                    .add(R.id.container, new DonateFormFragment()).commit();
         }
     }
 
@@ -44,21 +45,28 @@ public class GatherInformationActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-
-        public PlaceholderFragment() {
+    public void submitInformation() {
+        // TODO Change filename
+        // WARNING: Previous instances of this file will be overwritten
+        String FILENAME = "hello_file";
+        String stringToWrite = generateStringToSave();
+        FileOutputStream fos = null;
+        try {
+            fos = openFileOutput(FILENAME, Context.MODE_PRIVATE);
+            fos.write(stringToWrite.getBytes());
+            fos.close();
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
 
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                Bundle savedInstanceState) {
-            View rootView = inflater
-                    .inflate(R.layout.fragment_gather_information, container, false);
-            return rootView;
-        }
     }
 
+    private String generateStringToSave() {
+
+        return null;
+    }
 }
