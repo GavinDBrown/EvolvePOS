@@ -54,7 +54,7 @@ public class GatherInformationActivity extends ActionBarActivity {
         // TODO Change filename
         // WARNING: Previous instances of this file will be overwritten
         String FILENAME = "hello_file";
-        String stringToWrite = generateStringToSave(((ViewGroup) findViewById(android.R.id.content)));
+        String stringToWrite = generateStringToSaveRecersiveSearch(((ViewGroup) findViewById(android.R.id.content)));
         FileOutputStream fos = null;
         try {
             fos = openFileOutput(FILENAME, Context.MODE_PRIVATE);
@@ -79,8 +79,9 @@ public class GatherInformationActivity extends ActionBarActivity {
      * 
      * @return The data to be saved.
      */
-    private String generateStringToSave(ViewGroup v) {
+    private String generateStringToSaveRecersiveSearch(ViewGroup v) {
         StringBuilder sb = new StringBuilder();
+        // Put names and values of fields
         for (int i = 0; i < v.getChildCount(); i++) {
             Object child = v.getChildAt(i);
             if (child instanceof EditText) {
@@ -93,10 +94,9 @@ public class GatherInformationActivity extends ActionBarActivity {
                 sb.append(',');
                 sb.append(String.valueOf(((CheckBox) child).isChecked()));
                 sb.append('\n');
-
             } else if (child instanceof ViewGroup) {
                 // Recursive call
-                sb.append(generateStringToSave((ViewGroup) child));
+                sb.append(generateStringToSaveRecersiveSearch((ViewGroup) child));
             }
         }
         return sb.toString();
