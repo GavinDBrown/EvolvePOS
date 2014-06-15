@@ -4,6 +4,7 @@ package com.evolve.evolvepos;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.text.format.Time;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -54,11 +55,18 @@ public class GatherInformationActivity extends ActionBarActivity {
         // TODO Change filename
         // WARNING: Previous instances of this file will be overwritten
         String FILENAME = "hello_file";
-        String stringToWrite = generateStringToSaveRecersiveSearch(((ViewGroup) findViewById(android.R.id.content)));
+
+        StringBuilder stringToSave = new StringBuilder();
+        // Put the current time
+        Time t = new Time();
+        t.setToNow();
+        stringToSave.append(t.toString());
+
+        getFields(((ViewGroup) findViewById(android.R.id.content)), stringToSave);
         FileOutputStream fos = null;
         try {
             fos = openFileOutput(FILENAME, Context.MODE_PRIVATE);
-            fos.write(stringToWrite.getBytes());
+            fos.write(stringToSave.toString().getBytes());
             fos.close();
         } catch (FileNotFoundException e) {
             // TODO Auto-generated catch block
@@ -69,36 +77,56 @@ public class GatherInformationActivity extends ActionBarActivity {
         }
 
         // FOR DEBUGING
-        Toast toast = Toast.makeText(this, stringToWrite, Toast.LENGTH_LONG);
+        Toast toast = Toast.makeText(this, stringToSave.toString(), Toast.LENGTH_LONG);
         toast.show();
 
     }
 
     /**
-     * Process current state of all user input into a String that will be saved
+     * Populate the provided StringBuilder with all the tags of the elements in
+     * ViewGroup that we are interested in (currently EditText and CheckBox)
      * 
-     * @return The data to be saved.
+     * @param viewGroup
+     * @param stringBuilder
      */
-    private String generateStringToSaveRecersiveSearch(ViewGroup v) {
-        StringBuilder sb = new StringBuilder();
+    private void getTags(ViewGroup viewGroup, StringBuilder stringBuilder) {
+        for (int i = 0; i < viewGroup.getChildCount(); i++) {
+            Object child = viewGroup.getChildAt(i);
+            if (child instanceof EditText) {
+                stringBuilder.append((String) (((EditText) child).getTag()));
+                stringBuilder.append('\n');
+            } else if (child instanceof CheckBox) {
+                stringBuilder.append((String) (((CheckBox) child).getTag()));
+                stringBuilder.append('\n');
+            } else if (child instanceof ViewGroup) {
+                // Recursive call
+                getTags((ViewGroup) child, stringBuilder);
+            }
+        }
+    }
+
+    /**
+     * Populate the provided StringBuilder with all the fields of the elements
+     * in ViewGroup that we are interested in (currently EditText and CheckBox)
+     * 
+     * @param viewGroup
+     * @param stringBuilder
+     */
+    private void getFields(ViewGroup v, StringBuilder sb) {
         // Put names and values of fields
         for (int i = 0; i < v.getChildCount(); i++) {
             Object child = v.getChildAt(i);
             if (child instanceof EditText) {
-                sb.append((String) (((EditText) child).getTag()));
-                sb.append(',');
                 sb.append(((EditText) child).getText());
                 sb.append('\n');
             } else if (child instanceof CheckBox) {
-                sb.append((String) (((CheckBox) child).getTag()));
-                sb.append(',');
                 sb.append(String.valueOf(((CheckBox) child).isChecked()));
                 sb.append('\n');
             } else if (child instanceof ViewGroup) {
                 // Recursive call
-                sb.append(generateStringToSaveRecersiveSearch((ViewGroup) child));
+                getFields((ViewGroup) child, sb);
             }
         }
-        return sb.toString();
+
     }
 }
