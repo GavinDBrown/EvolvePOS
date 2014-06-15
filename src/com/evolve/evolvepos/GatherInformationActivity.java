@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.text.format.Time;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,6 +19,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class GatherInformationActivity extends ActionBarActivity {
+    private static final String FILE_NAME = "FILE_NAME";
+    private static final String TAG = "GatherInformationActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +31,38 @@ public class GatherInformationActivity extends ActionBarActivity {
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.container, new DonateFormFragment()).commit();
         }
+
+        boolean oldFileExists = false;
+        for (String file : fileList()) {
+            if (FILE_NAME.equals(file))
+                oldFileExists = true;
+        }
+        if (!oldFileExists) {
+            FileOutputStream fos = null;
+            StringBuilder newFileStringBuilder = new StringBuilder();
+            newFileStringBuilder.append(getFormName());
+            getTags(((ViewGroup) findViewById(android.R.id.content)), newFileStringBuilder);
+            try {
+                fos = openFileOutput(FILE_NAME, Context.MODE_PRIVATE);
+                fos.write(newFileStringBuilder.toString().getBytes());
+                fos.close();
+            } catch (FileNotFoundException e) {
+                Log.e(TAG, "File not found exception in onCreate");
+                e.printStackTrace();
+            } catch (IOException e) {
+                Log.e(TAG, "IOException in onCreate");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Get the name of the current form
+     * 
+     * @return
+     */
+    private String getFormName() {
+        return "Default Form";
     }
 
     @Override
@@ -46,35 +81,37 @@ public class GatherInformationActivity extends ActionBarActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_settings) {
+            // ignore settings for now
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
     public void submitInformation(View v) {
-        // TODO Change filename
-        // WARNING: Previous instances of this file will be overwritten
-        String FILENAME = "hello_file";
 
         StringBuilder stringToSave = new StringBuilder();
         // Put the current time
         Time t = new Time();
         t.setToNow();
         stringToSave.append(t.toString());
+        stringToSave.append('\n');
 
         getFields(((ViewGroup) findViewById(android.R.id.content)), stringToSave);
         FileOutputStream fos = null;
         try {
-            fos = openFileOutput(FILENAME, Context.MODE_PRIVATE);
+            fos = openFileOutput(FILE_NAME, Context.MODE_APPEND);
             fos.write(stringToSave.toString().getBytes());
             fos.close();
         } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
+            Log.e(TAG, "FileNotFoundException in submitInformation");
             e.printStackTrace();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
+            Log.e(TAG, "IOException in submitInformation");
             e.printStackTrace();
         }
+
+        // TODO Display notification to user that information has been saved and
+        // update UI
 
         // FOR DEBUGING
         Toast toast = Toast.makeText(this, stringToSave.toString(), Toast.LENGTH_LONG);
@@ -127,6 +164,10 @@ public class GatherInformationActivity extends ActionBarActivity {
                 getFields((ViewGroup) child, sb);
             }
         }
+
+    }
+
+    private void exportData() {
 
     }
 }
