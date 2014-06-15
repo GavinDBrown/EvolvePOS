@@ -1,7 +1,9 @@
 
 package com.evolve.evolvepos;
 
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.text.format.Time;
@@ -14,6 +16,11 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPReply;
+
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -21,6 +28,12 @@ import java.io.IOException;
 public class GatherInformationActivity extends ActionBarActivity {
     protected static final String FILE_NAME = "FILE_NAME";
     private static final String TAG = "GatherInformationActivity";
+    public static final String UPLOAD = "UPLOAD";
+    private FTPClient mFtpClient;
+    private static final String HOSTNAME = "ftp.drivehq.com";
+    private static final String USERNAME = "EvolvePosTest";
+    private static final String PASSWORD = "HackSummit";
+    private static final int PORT = 21;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,10 +92,14 @@ public class GatherInformationActivity extends ActionBarActivity {
         // automatically handle clicks on the Home/Up button, so
         // long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            // ignore settings for now
-            return true;
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                // ignore settings for now
+                return true;
+            case R.id.action_upload:
+                // begin upload service
+                upload();
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -109,14 +126,31 @@ public class GatherInformationActivity extends ActionBarActivity {
             Log.e(TAG, "IOException in submitInformation");
             e.printStackTrace();
         }
+        Log.d(TAG, "Saved form information: " + stringToSave.toString());
 
-        // TODO Display notification to user that information has been saved and
+        // Display notification to user that information has been saved and
         // update UI
-
-        // FOR DEBUGING
-        Toast toast = Toast.makeText(this, stringToSave.toString(), Toast.LENGTH_LONG);
+        Toast toast = Toast.makeText(this, "Information saved", Toast.LENGTH_LONG);
         toast.show();
 
+        clearForm(((ViewGroup) findViewById(android.R.id.content)));
+    }
+
+    /**
+     * Clears all of the EditText and CheckBoxes in viewGroup
+     */
+    private void clearForm(ViewGroup viewGroup) {
+        for (int i = 0; i < viewGroup.getChildCount(); i++) {
+            Object child = viewGroup.getChildAt(i);
+            if (child instanceof EditText) {
+                ((EditText) child).setText("");
+            } else if (child instanceof CheckBox) {
+                ((CheckBox) child).setChecked(false);
+            } else if (child instanceof ViewGroup) {
+                // Recursive call
+                clearForm((ViewGroup) child);
+            }
+        }
     }
 
     /**
@@ -165,5 +199,104 @@ public class GatherInformationActivity extends ActionBarActivity {
             }
         }
 
+    }
+
+    private void upload() {
+        if (mFtpClient == null) {
+            mFtpClient = new FTPClient();
+        }
+        new AsyncUploader().execute();
+
+    }
+
+    private final class AsyncUploader extends AsyncTask<Void, Void, Void> {
+
+        ProgressDialog pd;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            pd = new ProgressDialog(GatherInformationActivity.this);
+            pd.setTitle("Sending Data");
+            pd.setMessage("Please wait, data is sending");
+            pd.setCancelable(false);
+            pd.setIndeterminate(true);
+            pd.show();
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            // Connect to the FTP server
+            boolean connectionStatus = false;
+            boolean uploadStatus = false;
+
+            try {
+                mFtpClient = new FTPClient();
+                // connecting to the host
+                mFtpClient.connect(HOSTNAME, PORT);
+
+                // now check the reply code, if positive mean connection
+                // success
+                if (FTPReply.isPositiveCompletion(mFtpClient.getReplyCode())) {
+                    // login using username & password
+                    connectionStatus = mFtpClient.login(USERNAME, PASSWORD);
+
+                    /*
+                     * Set File Transfer Mode To avoid corruption issue you must
+                     * specified a correct transfer mode, such as
+                     * ASCII_FILE_TYPE, BINARY_FILE_TYPE, EBCDIC_FILE_TYPE .etc.
+                     * Here, I use BINARY_FILE_TYPE for transferring text,
+                     * image, and compressed files.
+                     */
+                    mFtpClient.setFileType(FTP.BINARY_FILE_TYPE);
+                    mFtpClient.enterLocalPassiveMode();
+                }
+            } catch (Exception e) {
+                Log.d(TAG, "Error: could not connect to host " + HOSTNAME);
+            }
+
+            if (!connectionStatus) {
+                // NOT CONNECTED to ftp server
+                // TODO
+                Log.e(TAG, "Unable to connect to server!");
+            } else {
+                try {
+                    FileInputStream srcFileStream = openFileInput(GatherInformationActivity.FILE_NAME);
+
+                    Time now = new Time();
+                    now.setToNow();
+                    String dateAndTime = now.format2445();
+                    // TODO Add a unique id for the device uploading the
+                    // file
+                    uploadStatus = mFtpClient.storeFile(dateAndTime, srcFileStream);
+
+                    srcFileStream.close();
+                } catch (Exception e) {
+                    Log.d(TAG, "upload failed: " + e);
+                }
+
+                if (!uploadStatus) {
+                    // FILE NOT UPLOADED
+                    // TODO
+                    Log.e(TAG, "File not uploaded!");
+                } else {
+                    // file uploaded
+                    // delete file from local content
+                    getApplicationContext().deleteFile(GatherInformationActivity.FILE_NAME);
+                    Log.d(TAG, "File uploaded and deleted from local content");
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+            pd.dismiss();
+            Toast toast = Toast.makeText(GatherInformationActivity.this, "File uploaded",
+                    Toast.LENGTH_SHORT);
+            toast.show();
+        }
     }
 }
