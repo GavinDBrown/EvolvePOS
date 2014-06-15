@@ -19,7 +19,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class GatherInformationActivity extends ActionBarActivity {
-    private static final String FILE_NAME = "FILE_NAME";
+    protected static final String FILE_NAME = "FILE_NAME";
     private static final String TAG = "GatherInformationActivity";
 
     @Override
@@ -164,10 +164,6 @@ public class GatherInformationActivity extends ActionBarActivity {
                 getFields((ViewGroup) child, sb);
             }
         }
-
-    }
-
-    private void exportData() {
 
     }
 }
