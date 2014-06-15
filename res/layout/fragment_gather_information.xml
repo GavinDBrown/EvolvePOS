@@ -17,6 +17,7 @@
 
         <EditText
             android:id="@+id/name"
+            android:tag="name"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:hint="@string/name_hint"
@@ -24,6 +25,7 @@
 
         <EditText
             android:id="@+id/street_address"
+            android:tag="street address"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:hint="@string/street_address_hint"
@@ -31,6 +33,7 @@
 
         <EditText
             android:id="@+id/city_address"
+            android:tag="city"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:hint="@string/city_address_hint"
@@ -45,6 +48,7 @@
 
             <EditText
                 android:id="@+id/state_address"
+                android:tag="state"
                 android:layout_width="0dip"
                 android:layout_height="wrap_content"
                 android:layout_weight=".50"
@@ -53,6 +57,7 @@
 
             <EditText
                 android:id="@+id/zip_address"
+                android:tag="zip"
                 android:layout_width="0dip"
                 android:layout_height="wrap_content"
                 android:layout_weight=".50"
@@ -62,6 +67,7 @@
 
         <EditText
             android:id="@+id/email_address"
+            android:tag="email address"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:hint="@string/email_hint"
@@ -76,6 +82,7 @@
 
             <EditText
                 android:id="@+id/mobile_phone"
+                android:tag="mobile phone"
                 android:layout_width="0dip"
                 android:layout_height="wrap_content"
                 android:layout_weight=".5"
@@ -84,6 +91,7 @@
 
             <EditText
                 android:id="@+id/evening_phone"
+                android:tag="evening phone"
                 android:layout_width="0dip"
                 android:layout_height="wrap_content"
                 android:layout_weight=".5"
@@ -99,12 +107,14 @@
 
             <CheckBox
                 android:id="@+id/volunteer_checkbox"
+                android:tag="volunteer checkbox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/volunteer" />
 
             <CheckBox
                 android:id="@+id/keep_informed_checkbox"
+                android:tag="keep informed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/keep_informed" />
@@ -112,6 +122,7 @@
 
         <EditText
             android:id="@+id/amount"
+            android:tag="amount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:hint="@string/amount_hint"
@@ -119,6 +130,7 @@
 
         <EditText
             android:id="@+id/cc_number"
+            android:tag="cc number"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:hint="@string/cc_number_hint"
@@ -132,6 +144,7 @@
 
             <EditText
                 android:id="@+id/cc_month"
+                android:tag="cc month"
                 android:layout_width="0dip"
                 android:layout_height="wrap_content"
                 android:layout_weight=".5"
@@ -140,6 +153,7 @@
 
             <EditText
                 android:id="@+id/cc_year"
+                android:tag="cc year"
                 android:layout_width="0dip"
                 android:layout_height="wrap_content"
                 android:layout_weight=".5"
@@ -152,7 +166,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/submit"
-            android:layout_gravity="right" >
+            android:layout_gravity="right"
+            android:onClick="submitInformation">
         </Button>
     </LinearLayout>
 
