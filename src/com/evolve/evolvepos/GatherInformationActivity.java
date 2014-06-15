@@ -1,8 +1,12 @@
 
 package com.evolve.evolvepos;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -35,6 +39,8 @@ public class GatherInformationActivity extends ActionBarActivity {
     private static final String PASSWORD = "HackSummit";
     private static final int PORT = 21;
 
+    private boolean mIsUploading = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,29 +49,6 @@ public class GatherInformationActivity extends ActionBarActivity {
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.container, new DonateFormFragment()).commit();
-        }
-
-        boolean oldFileExists = false;
-        for (String file : fileList()) {
-            if (FILE_NAME.equals(file))
-                oldFileExists = true;
-        }
-        if (!oldFileExists) {
-            FileOutputStream fos = null;
-            StringBuilder newFileStringBuilder = new StringBuilder();
-            newFileStringBuilder.append(getFormName());
-            getTags(((ViewGroup) findViewById(android.R.id.content)), newFileStringBuilder);
-            try {
-                fos = openFileOutput(FILE_NAME, Context.MODE_PRIVATE);
-                fos.write(newFileStringBuilder.toString().getBytes());
-                fos.close();
-            } catch (FileNotFoundException e) {
-                Log.e(TAG, "File not found exception in onCreate");
-                e.printStackTrace();
-            } catch (IOException e) {
-                Log.e(TAG, "IOException in onCreate");
-                e.printStackTrace();
-            }
         }
     }
 
@@ -104,8 +87,41 @@ public class GatherInformationActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void submitInformation(View v) {
+    /**
+     * Check if there is a save file in existence
+     * 
+     * @return
+     */
+    private boolean saveFileExists() {
+        boolean fileExists = false;
+        for (String file : fileList()) {
+            if (FILE_NAME.equals(file))
+                fileExists = true;
+        }
+        return fileExists;
+    }
 
+    private void saveInformation() {
+        // Check if there is already a save file and create one if needed.
+        if (!saveFileExists()) {
+            FileOutputStream fos = null;
+            StringBuilder newFileStringBuilder = new StringBuilder();
+            newFileStringBuilder.append(getFormName());
+            getTags(((ViewGroup) findViewById(android.R.id.content)), newFileStringBuilder);
+            try {
+                fos = openFileOutput(FILE_NAME, Context.MODE_PRIVATE);
+                fos.write(newFileStringBuilder.toString().getBytes());
+                fos.close();
+            } catch (FileNotFoundException e) {
+                Log.e(TAG, "File not found exception in onCreate");
+                e.printStackTrace();
+            } catch (IOException e) {
+                Log.e(TAG, "IOException in onCreate");
+                e.printStackTrace();
+            }
+        }
+
+        // Create the string to save.
         StringBuilder stringToSave = new StringBuilder();
         // Put the current time
         Time t = new Time();
@@ -127,13 +143,43 @@ public class GatherInformationActivity extends ActionBarActivity {
             e.printStackTrace();
         }
         Log.d(TAG, "Saved form information: " + stringToSave.toString());
+    }
 
-        // Display notification to user that information has been saved and
-        // update UI
-        Toast toast = Toast.makeText(this, "Information saved", Toast.LENGTH_LONG);
-        toast.show();
+    /**
+     * Called when the user clicks the submit button. Displays a confirmation
+     * dialog and then saves the form data before clearing the form.
+     * 
+     * @param v
+     */
+    public void submitInformation(View v) {
+        // Confirm that the user wants to submit their information
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.dialog_submit_message).setTitle(R.string.dialog_submit_title);
+        builder.setPositiveButton(R.string.dialog_submit_positive_button,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        // User clicked Submit button
+                        saveInformation();
 
-        clearForm(((ViewGroup) findViewById(android.R.id.content)));
+                        clearForm(((ViewGroup) findViewById(android.R.id.content)));
+
+                        // Thank the user for their submission
+                        AlertDialog.Builder thanksBuilder = new AlertDialog.Builder(
+                                GatherInformationActivity.this);
+                        thanksBuilder.setMessage(R.string.dialog_thanks_message);
+                        thanksBuilder.create().show();
+                    }
+                });
+        builder.setNegativeButton(R.string.dialog_submit_negative_button,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        // User cancelled the submission process
+                    }
+                });
+        builder.create().show();
+
     }
 
     /**
@@ -202,10 +248,51 @@ public class GatherInformationActivity extends ActionBarActivity {
     }
 
     private void upload() {
+
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+
         if (mFtpClient == null) {
             mFtpClient = new FTPClient();
         }
-        new AsyncUploader().execute();
+
+        boolean hasData = saveFileExists();
+
+        if (!isConnected) {// check if there is no network connection
+            // No network connection!
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(R.string.dialog_no_connection_message).setTitle(
+                    R.string.dialog_no_connection_title);
+            builder.setPositiveButton(R.string.dialog_no_connection_positive_button,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int id) {
+                            // User clicked retry button
+                            upload();
+                        }
+                    });
+            builder.setNegativeButton(R.string.dialog_no_connection_negative_button,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int id) {
+                            // User cancelled the submission process
+                        }
+                    });
+            builder.create().show();
+        } else if (mIsUploading) { // check if there is a current upload in
+                                   // progress. (i.e. user press button twice
+                                   // in
+                                   // quick succesion.)
+            Toast toast = Toast.makeText(this, R.string.currently_uploading, Toast.LENGTH_SHORT);
+            toast.show();
+        } else if (!hasData) { // check if there is data that needs uploaded
+            Toast toast = Toast
+                    .makeText(this, R.string.toast_no_data_to_upload, Toast.LENGTH_SHORT);
+            toast.show();
+        } else { // Upload the data!
+            new AsyncUploader().execute();
+        }
 
     }
 
@@ -216,6 +303,8 @@ public class GatherInformationActivity extends ActionBarActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+
+            mIsUploading = true;
 
             pd = new ProgressDialog(GatherInformationActivity.this);
             pd.setTitle("Sending Data");
@@ -258,7 +347,7 @@ public class GatherInformationActivity extends ActionBarActivity {
 
             if (!connectionStatus) {
                 // NOT CONNECTED to ftp server
-                // TODO
+                // TODO fail gracefully or retry
                 Log.e(TAG, "Unable to connect to server!");
             } else {
                 try {
@@ -278,7 +367,7 @@ public class GatherInformationActivity extends ActionBarActivity {
 
                 if (!uploadStatus) {
                     // FILE NOT UPLOADED
-                    // TODO
+                    // TODO fail gracefully or retry
                     Log.e(TAG, "File not uploaded!");
                 } else {
                     // file uploaded
@@ -294,9 +383,10 @@ public class GatherInformationActivity extends ActionBarActivity {
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
             pd.dismiss();
-            Toast toast = Toast.makeText(GatherInformationActivity.this, "File uploaded",
-                    Toast.LENGTH_SHORT);
+            Toast toast = Toast.makeText(GatherInformationActivity.this,
+                    R.string.file_upload_successful, Toast.LENGTH_SHORT);
             toast.show();
+            mIsUploading = false;
         }
     }
 }

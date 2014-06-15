@@ -6,7 +6,8 @@
     <item
         android:id="@+id/action_upload"
         android:title="@string/upload"
-        app:showAsAction="never"/>
+        android:icon="@drawable/ic_action_upload"
+        app:showAsAction="ifRoom"/>
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"
