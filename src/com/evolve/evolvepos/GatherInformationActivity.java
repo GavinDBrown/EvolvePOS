@@ -40,6 +40,7 @@ public class GatherInformationActivity extends ActionBarActivity {
     private static final int PORT = 21;
 
     private boolean mIsUploading = false;
+    private StringBuilder mInvalidFields = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +51,14 @@ public class GatherInformationActivity extends ActionBarActivity {
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.container, new DonateFormFragment()).commit();
         }
+
+    }
+
+    private boolean validate(EditText et) {
+        String[] viewTag = ((String) et.getTag()).split(":");
+        // TODO check that a valid format is supplied and that it's a regex
+        String validFormat = viewTag[1];
+        return et.getText().toString().matches(validFormat);
     }
 
     /**
@@ -101,16 +110,20 @@ public class GatherInformationActivity extends ActionBarActivity {
         return fileExists;
     }
 
-    private void saveInformation() {
+    private boolean saveInformation() {
         // Check if there is already a save file and create one if needed.
         if (!saveFileExists()) {
             FileOutputStream fos = null;
             StringBuilder newFileStringBuilder = new StringBuilder();
             newFileStringBuilder.append(getFormName());
-            getTags(((ViewGroup) findViewById(android.R.id.content)), newFileStringBuilder);
+            newFileStringBuilder.append("\n");
+            int numFields = getTags(((ViewGroup) findViewById(android.R.id.content)),
+                    newFileStringBuilder);
+
             try {
                 fos = openFileOutput(FILE_NAME, Context.MODE_PRIVATE);
-                fos.write(newFileStringBuilder.toString().getBytes());
+                fos.write((Integer.toString(numFields) + "\n" + (newFileStringBuilder.toString()))
+                        .getBytes());
                 fos.close();
             } catch (FileNotFoundException e) {
                 Log.e(TAG, "File not found exception in onCreate");
@@ -129,20 +142,35 @@ public class GatherInformationActivity extends ActionBarActivity {
         stringToSave.append(t.toString());
         stringToSave.append('\n');
 
-        getFields(((ViewGroup) findViewById(android.R.id.content)), stringToSave);
-        FileOutputStream fos = null;
-        try {
-            fos = openFileOutput(FILE_NAME, Context.MODE_APPEND);
-            fos.write(stringToSave.toString().getBytes());
-            fos.close();
-        } catch (FileNotFoundException e) {
-            Log.e(TAG, "FileNotFoundException in submitInformation");
-            e.printStackTrace();
-        } catch (IOException e) {
-            Log.e(TAG, "IOException in submitInformation");
-            e.printStackTrace();
+        StringBuilder invalids = new StringBuilder();
+
+        boolean allValid = getFieldsAndValidate(((ViewGroup) findViewById(android.R.id.content)),
+                stringToSave, invalids);
+
+        // check if all fields have valid information before saving
+        if (!allValid) {
+            // this field is invalid
+            mInvalidFields = invalids;
+
+        } else {
+            FileOutputStream fos = null;
+            // TODO make sure user doesn't try to upload and save information at
+            // the
+            // same time corrupting the file.
+            try {
+                fos = openFileOutput(FILE_NAME, Context.MODE_APPEND);
+                fos.write(stringToSave.toString().getBytes());
+                fos.close();
+            } catch (FileNotFoundException e) {
+                Log.e(TAG, "FileNotFoundException in submitInformation");
+                e.printStackTrace();
+            } catch (IOException e) {
+                Log.e(TAG, "IOException in submitInformation");
+                e.printStackTrace();
+            }
+            Log.d(TAG, "Saved form information: " + stringToSave.toString());
         }
-        Log.d(TAG, "Saved form information: " + stringToSave.toString());
+        return allValid;
     }
 
     /**
@@ -160,15 +188,27 @@ public class GatherInformationActivity extends ActionBarActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         // User clicked Submit button
-                        saveInformation();
+                        boolean allValid = saveInformation();
 
-                        clearForm(((ViewGroup) findViewById(android.R.id.content)));
+                        if (allValid) {
+                            clearForm(((ViewGroup) findViewById(android.R.id.content)));
 
-                        // Thank the user for their submission
-                        AlertDialog.Builder thanksBuilder = new AlertDialog.Builder(
-                                GatherInformationActivity.this);
-                        thanksBuilder.setMessage(R.string.dialog_thanks_message);
-                        thanksBuilder.create().show();
+                            // Thank the user for their submission
+                            AlertDialog.Builder thanksBuilder = new AlertDialog.Builder(
+                                    GatherInformationActivity.this);
+                            thanksBuilder.setMessage(R.string.dialog_thanks_message);
+                            thanksBuilder.create().show();
+                        } else {
+                            // not all fields were valid
+                            AlertDialog.Builder builder = new AlertDialog.Builder(
+                                    GatherInformationActivity.this);
+                            builder.setMessage(
+                                    "Please correct the following information: "
+                                            + mInvalidFields.toString()).setTitle(
+                                    R.string.dialog_invalid_title);
+                            builder.create().show();
+
+                        }
                     }
                 });
         builder.setNegativeButton(R.string.dialog_submit_negative_button,
@@ -201,25 +241,29 @@ public class GatherInformationActivity extends ActionBarActivity {
 
     /**
      * Populate the provided StringBuilder with all the tags of the elements in
-     * ViewGroup that we are interested in (currently EditText and CheckBox)
+     * ViewGroup that we are interested in (currently EditText and CheckBox).
      * 
      * @param viewGroup
      * @param stringBuilder
      */
-    private void getTags(ViewGroup viewGroup, StringBuilder stringBuilder) {
+    private int getTags(ViewGroup viewGroup, StringBuilder stringBuilder) {
+        int numFields = 0;
         for (int i = 0; i < viewGroup.getChildCount(); i++) {
             Object child = viewGroup.getChildAt(i);
             if (child instanceof EditText) {
-                stringBuilder.append((String) (((EditText) child).getTag()));
+                stringBuilder.append(((String) (((EditText) child).getTag())).split(":")[0]);
                 stringBuilder.append('\n');
+                numFields++;
             } else if (child instanceof CheckBox) {
                 stringBuilder.append((String) (((CheckBox) child).getTag()));
                 stringBuilder.append('\n');
+                numFields++;
             } else if (child instanceof ViewGroup) {
                 // Recursive call
-                getTags((ViewGroup) child, stringBuilder);
+                numFields += getTags((ViewGroup) child, stringBuilder);
             }
         }
+        return numFields;
     }
 
     /**
@@ -229,11 +273,17 @@ public class GatherInformationActivity extends ActionBarActivity {
      * @param viewGroup
      * @param stringBuilder
      */
-    private void getFields(ViewGroup v, StringBuilder sb) {
-        // Put names and values of fields
+    private boolean getFieldsAndValidate(ViewGroup v, StringBuilder sb, StringBuilder invalids) {
+        boolean allValid = true;
+        // Get names and values of fields
         for (int i = 0; i < v.getChildCount(); i++) {
             Object child = v.getChildAt(i);
             if (child instanceof EditText) {
+                if (!validate((EditText) child)) {
+                    invalids.append(((EditText) child).getHint());
+                    invalids.append("; ");
+                    allValid = false;
+                }
                 sb.append(((EditText) child).getText());
                 sb.append('\n');
             } else if (child instanceof CheckBox) {
@@ -241,9 +291,11 @@ public class GatherInformationActivity extends ActionBarActivity {
                 sb.append('\n');
             } else if (child instanceof ViewGroup) {
                 // Recursive call
-                getFields((ViewGroup) child, sb);
+                allValid = getFieldsAndValidate((ViewGroup) child, sb, invalids) ? allValid : false;
             }
         }
+
+        return allValid;
 
     }
 
